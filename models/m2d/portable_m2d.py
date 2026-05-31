@@ -179,7 +179,7 @@ def make_it_CLAP(model, checkpoint):
 def get_backbone(args, weight_file):
     #name = Path(weight_file).parent.name if weight_file is not None \
        # else "m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly"
-    name = "m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly"
+    name = "m2d_clap_vit_base-80x608p16x16-240128_AS-FT_enconly"
     args.input_size, args.patch_size, args.sr, args.beats = parse_sizes_by_name(name)
 
     # Create a ViT.
