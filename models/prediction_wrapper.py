@@ -154,7 +154,9 @@ class PredictionsWrapper(nn.Module):
 
         state_dict = {k: v for k, v in state_dict.items() if k not in keys_to_remove}
         missing, unexpected = self.load_state_dict(state_dict, strict=strict)
-        assert len(missing) == expected_missing
+        assert len(missing) == expected_missing\
+        ## DEBUG PRINT
+        print("unexpected:", unexpected)
         assert len(unexpected) == 0
 
     def separate_params(self):
