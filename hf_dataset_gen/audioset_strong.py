@@ -19,17 +19,18 @@ label_map_strong_csv = os.path.join("metadata", "class_labels_indices_strong.csv
 label_map_csv = os.path.join("metadata", "class_labels_indices.csv")
 
 # TODO: set location where you store AudioSet hdf5 files
-audioset_hdf5_path = "/share/hel/datasets/audioset/hdf5s"
+#audioset_hdf5_path = "/mnt/d/audioset_tagging_cnn/datasets/audioset201906/mp3" (linux path)
+audioset_hdf5_path = "D:/audioset_tagging_cnn/datasets/audioset201906/mp3"
 
 _AUDIO_FILES = {
     "balanced_train": os.path.join(audioset_hdf5_path, "balanced_train_segments_mp3.hdf"),
-    "unbalanced_train": os.path.join(audioset_hdf5_path, "unbalanced_train_segments_mp3.hdf"),
+    #"unbalanced_train": os.path.join(audioset_hdf5_path, "unbalanced_train_segments_mp3.hdf"),
     "eval": os.path.join(audioset_hdf5_path, "eval_segments_mp3.hdf")
 }
 
 _METADATA = {
     "balanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
-    "unbalanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
+    #"unbalanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
     "eval": os.path.join("metadata", "audioset_eval_strong.csv")
 }
 
@@ -125,6 +126,18 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
             df['label_id'] = df['label']
             df['label'] = df['label'].map(label_id_map_strong)
 
+            TARGET_CLASSES = {
+                    "Child speech, kid speaking",
+                    "Female speech, woman speaking",
+                    "Male speech, man speaking"
+                } # TODO: filter for the target speech classes
+
+            LABEL_MAP = {
+                    "Child speech, kid speaking": "child_speech",
+                    "Female speech, woman speaking": "female_speech",
+                    "Male speech, man speaking": "male_speech"
+                } # TODO: replace weak labels with target labels (mapped)
+            
             for idx in df.index.unique():
                 yid = str(idx)
                 yid = "Y" + yid.rsplit('_', 1)[0]
@@ -133,11 +146,6 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
                     continue
 
                 seq_list = df.loc[[idx]]  # get rows corresponding to the file
-                TARGET_CLASSES = {
-                    "Child speech, kid speaking",
-                    "Female speech, woman speaking",
-                    "Male speech, man speaking"
-                } # TODO: filter for the target speech classes
 
                 '''event_list = []
                 for index, row in seq_list.iterrows():
@@ -164,11 +172,6 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
 
                 '''weak_labels = np.unpackbits(target[name_to_idx[yid]], axis=-1, count=len(idx_label_map)).astype(
                     np.float32)'''
-                LABEL_MAP = {
-                    "Child speech, kid speaking": "child_speech",
-                    "Female speech, woman speaking": "female_speech",
-                    "Male speech, man speaking": "male_speech"
-                } # TODO: replace weak labels with target labels (mapped)
 
                 data_row = {
                     # original:
@@ -196,12 +199,12 @@ if __name__ == '__main__':
 
     datasets.config.IN_MEMORY_MAX_SIZE = 10 * 1024 * 1024 * 1024
 
-    dataset = datasets.load_dataset("audioset_strong.py", num_proc=1, download_mode="force_redownload",
-                                    trust_remote_code=True)
+    dataset = datasets.load_dataset("audioset_strong.py", num_proc=1, download_mode="force_redownload")
 
     # TODO: specify location you want to store AudioSet Strong Huggingface Dataset in
     dataset.save_to_disk(
-        f"/share/hel/datasets/HF_datasets/local/audioset_strong",
+        #f"/mnt/d/audioset_strong_hf", linux path
+        f"D:/audioset_strong_hf",
         max_shard_size="2GB",
         num_proc=1,
     )
