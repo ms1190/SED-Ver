@@ -10,7 +10,7 @@ from torch.utils.data import (
     WeightedRandomSampler,
 )
 
-from data_util.audioset_classes import as_strong_train_classes
+from data_util.genderage_classes import as_strong_train_classes
 from data_util.transforms import (
     Mp3DecodeTransform,
     SequentialTransform,

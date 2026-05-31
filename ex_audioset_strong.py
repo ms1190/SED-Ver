@@ -67,6 +67,9 @@ class PLModule(pl.LightningModule):
                                        embed_dim=m2d.m2d.cfg.feature_d,
                                        #change here
                                        n_classes_strong=len(encoder.labels))
+            ## freeze backbone for fine-tuning
+            for param in m2d.m2d.backbone.parameters():
+                param.requires_grad = False
         elif config.model_name == "ASIT":
             asit = ASiTWrapper()
             model = PredictionsWrapper(asit, checkpoint=f"ASIT_{checkpoint}" if checkpoint else None,
@@ -302,7 +305,7 @@ class PLModule(pl.LightningModule):
         assert len(class_intersection) == len(set(as_strong_train_classes).intersection(as_strong_eval_classes)) == len(self.encoder.labels), \
             f"Intersection unique events. Expected: {len(set(as_strong_train_classes).intersection(as_strong_eval_classes))}," \
             f" Actual: {len(class_intersection)}"
-        assert len(class_intersection) ==
+        #assert len(class_intersection) ==
         
         # filter ground truth according to class_intersection
         val_ground_truth = {fid: [event for event in self.val_ground_truth[fid] if event[2] in class_intersection]
