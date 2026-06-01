@@ -13,7 +13,10 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 import sed_scores_eval
+import matplotlib.pyplot as plt
+import os
 
+from sklearn.metrics import confusion_matrix
 from helpers.decode import batched_decode_preds
 from helpers.encode import ManyHotEncoder
 from models.atstframe.ATSTF_wrapper import ATSTWrapper
@@ -39,6 +42,9 @@ class PLModule(pl.LightningModule):
         super().__init__()
         self.config = config
         self.encoder = encoder
+        # confusion matrix
+        self.all_preds = []
+        self.all_targets = []
 
         if config.checkpoint_path is not None:
             checkpoint = config.checkpoint_path
@@ -349,6 +355,8 @@ class PLModule(pl.LightningModule):
         as_strong_preds = {
             fid: self.val_predictions_strong[fid] for fid in val_ground_truth.keys()
         }
+
+
         # filter classes in predictions
         unused_classes = list(set(self.encoder.labels).difference(class_intersection))
         for f, df in as_strong_preds.items():
@@ -388,7 +396,6 @@ class PLModule(pl.LightningModule):
         self.val_ground_truth = {}
         self.val_duration = {}
         self.val_loss = []
-
 
 def train(config):
     # Train Models on temporally-strong portion of AudioSet.
