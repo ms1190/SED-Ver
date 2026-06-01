@@ -92,8 +92,13 @@ class PredictionsWrapper(nn.Module):
 
     def load_checkpoint(self, checkpoint):
         ckpt_file = os.path.join(RESOURCES_FOLDER, checkpoint + ".pt")
-        if not os.path.exists(ckpt_file):
-            download_url_to_file(CHECKPOINT_URLS[checkpoint], ckpt_file)
+        # for downloading checkpoints
+        if os.path.exists(checkpoint):
+            ckpt_file = checkpoint
+        else:
+            ckpt_file = os.path.join(RESOURCES_FOLDER, checkpoint + ".pt")
+            if not os.path.exists(ckpt_file):
+                download_url_to_file(CHECKPOINT_URLS[checkpoint], ckpt_file)
         state_dict = torch.load(ckpt_file, map_location="cpu", weights_only=True)
 
         # compatibility with uniform wrapper structure we introduced for the public repo

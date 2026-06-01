@@ -1,3 +1,5 @@
+from logging import config
+
 import numpy as np
 import pandas as pd
 import torch
@@ -38,7 +40,9 @@ class PLModule(pl.LightningModule):
         self.config = config
         self.encoder = encoder
 
-        if config.pretrained == "scratch":
+        if config.checkpoint_path is not None:
+            checkpoint = config.checkpoint_path
+        elif config.pretrained == "scratch":
             checkpoint = None
         elif config.pretrained == "ssl":
             checkpoint = "ssl"
@@ -64,7 +68,8 @@ class PLModule(pl.LightningModule):
                                        seq_model_type=config.seq_model_type)
         elif config.model_name == "M2D":
             m2d = M2DWrapper()
-            model = PredictionsWrapper(m2d, checkpoint=f"M2D_{checkpoint}" if checkpoint else None,
+            model = PredictionsWrapper(m2d, checkpoint = config.checkpoint_path if config.checkpoint_path else f"M2D_{checkpoint}" if checkpoint else None,
+                                       #checkpoint=f"M2D_{checkpoint}" if checkpoint else None,
                                        seq_model_type=config.seq_model_type,
                                        embed_dim=m2d.m2d.cfg.feature_d,
                                        #change here
@@ -509,6 +514,8 @@ if __name__ == '__main__':
                         default="weak")
     parser.add_argument('--seq_model_type', type=str, choices=["rnn"],
                         default=None)
+    #add checkpoint
+    parser.add_argument("--checkpoint_path", type=str, default=None)
 
     # training
     parser.add_argument('--n_epochs', type=int, default=30)
