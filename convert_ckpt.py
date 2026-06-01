@@ -1,6 +1,6 @@
 import torch
 
-ckpt_path = "checkpoints/epoch=59.ckpt"
+ckpt_path = "checkpoints/best.ckpt"
 
 ckpt = torch.load(ckpt_path, map_location="cpu")
 state_dict = ckpt["state_dict"]
