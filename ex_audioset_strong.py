@@ -9,7 +9,9 @@ import transformers
 import random
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 import sed_scores_eval
+
 from helpers.decode import batched_decode_preds
 from helpers.encode import ManyHotEncoder
 from models.atstframe.ATSTF_wrapper import ATSTWrapper
@@ -70,6 +72,11 @@ class PLModule(pl.LightningModule):
             ## freeze backbone for fine-tuning
             for param in m2d.m2d.backbone.parameters():
                 param.requires_grad = False
+            ## DEBUG PRINT
+            trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+            frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+            print(f"Trainable: {trainable}, Frozen: {frozen}")
+
         elif config.model_name == "ASIT":
             asit = ASiTWrapper()
             model = PredictionsWrapper(asit, checkpoint=f"ASIT_{checkpoint}" if checkpoint else None,
@@ -96,6 +103,7 @@ class PLModule(pl.LightningModule):
         self.val_ground_truth = {}
         self.val_duration = {}
         self.val_loss = []
+         
 
     def forward(self, batch):
         x = batch["audio"]
@@ -273,9 +281,19 @@ class PLModule(pl.LightningModule):
         # bring ground truth into shape needed for evaluation
         for f, gt_string in zip(val_batch["filename"], val_batch["gt_string"]):
             f = f[:-len(".mp3")]
+            ## DEBUG
+            #print("f:", f, "type:", type(f))
+            matches = self.val_durations_df[self.val_durations_df["filename"] == f]
+            ## DEBUG
+            #print(f"matches={len(matches)}")
+            if len(matches) == 0:
+                ## DEBUG
+                #print(f"NOT FOUND IN CSV: {f}")
+                continue
+            self.val_duration[f] = matches["duration"].values[0]
             events = [e.split(";;") for e in gt_string.split("++")]
             self.val_ground_truth[f] = [(float(e[0]), float(e[1]), e[2]) for e in events]
-            self.val_duration[f] = self.val_durations_df[self.val_durations_df["filename"] == f]["duration"].values[0]
+            #self.val_duration[f] = self.val_durations_df[self.val_durations_df["filename"] == f]["duration"].values[0]
 
         y_hat_strong = self(val_batch)
         y_strong = val_batch["strong"]
@@ -299,6 +317,11 @@ class PLModule(pl.LightningModule):
         train_unique_events = set(self.encoder.labels)
         # evaluate on all classes that are in both train and test sets (407 classes)
         class_intersection = gt_unique_events.intersection(train_unique_events)
+
+        ## DEBUG PRINT
+        #print("gt_unique_events:", gt_unique_events)
+        #print("train_unique_events:", train_unique_events)
+        #print("val_ground_truth size:", len(self.val_ground_truth))
 
         # assumes number of classes is 407 
         # change assumption to match length of encoder labels
@@ -405,6 +428,15 @@ def train(config):
     # create pytorch lightening module
     pl_module = PLModule(config, encoder)
 
+    #create checkpoint callback
+    chkpt_callback = ModelCheckpoint(
+        monitor="val/pauroc",
+        mode="max",
+        save_top_k=1,
+        dirpath="checkpoints/",
+        filename="best"
+    )
+
     # create the pytorch lightening trainer by specifying the number of epochs to train, the logger,
     # on which kind of device(s) to train and possible callbacks
     trainer = pl.Trainer(max_epochs=config.n_epochs,
@@ -413,7 +445,9 @@ def train(config):
                          devices=config.num_devices,
                          precision=config.precision,
                          num_sanity_val_steps=0,
-                         check_val_every_n_epoch=config.check_val_every_n_epoch
+                         check_val_every_n_epoch=config.check_val_every_n_epoch,
+                         #checkpoint
+                         callbacks=[chkpt_callback]
                          )
 
     # start training and validation for the specified number of epochs

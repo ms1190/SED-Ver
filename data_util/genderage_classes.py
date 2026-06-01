@@ -1,13 +1,13 @@
 as_strong_train_classes = [
-    "child_speech",
-    "female_speech",
-    "male_speech"
+    "Child speech, kid speaking",
+    "Female speech, woman speaking",
+    "Male speech, man speaking"
 ]
 
 as_strong_eval_classes = [
-    "child_speech",
-    "female_speech",
-    "male_speech"
+    "Child speech, kid speaking",
+    "Female speech, woman speaking",
+    "Male speech, man speaking"
 ]
 
 genderage_classes = [

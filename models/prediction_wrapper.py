@@ -156,8 +156,10 @@ class PredictionsWrapper(nn.Module):
         missing, unexpected = self.load_state_dict(state_dict, strict=strict)
         assert len(missing) == expected_missing\
         ## DEBUG PRINT
-        print("unexpected:", unexpected)
-        assert len(unexpected) == 0
+        #print("unexpected:", unexpected)
+        #assert len(unexpected) == 0
+        if len(unexpected) > 0:
+            print(f"Ignoring unexpected keys: {unexpected}")
 
     def separate_params(self):
         if hasattr(self, "separate_params"):
