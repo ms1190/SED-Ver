@@ -34,8 +34,9 @@ class PredictionsWrapper(nn.Module):
     def __init__(self,
                  base_model,
                  checkpoint=None,
-                 #n_classes_strong=447,
-                 n_classes_strong=21, # CHANGED
+                 #n_classes_strong=447, # FOR ORIGINAL INFERENCE.PY
+                 n_classes_strong=21, # FOR INFERENCE_FT.PY
+                 #n_classes_strong=3, # FOR INFERENCE_FT.PY
                  n_classes_weak=None,
                  embed_dim=768,
                  seq_len=250,
