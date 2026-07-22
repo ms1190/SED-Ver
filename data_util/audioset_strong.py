@@ -117,7 +117,7 @@ def get_training_dataset(
     as_ds.set_transform(SequentialTransform(as_transforms))
 
     ds_list.append(as_ds["balanced_train"])
-    #ds_list.append(as_ds["unbalanced_train"])
+    ds_list.append(as_ds["unbalanced_train"])
     #no unbalanced train
     dataset = torch.utils.data.ConcatDataset(ds_list)
 
@@ -163,7 +163,6 @@ def get_eval_dataset(
     dataset = torch.utils.data.ConcatDataset(ds_list)
     return dataset
 
-
 def get_full_dataset(label_encoder, audio_length=10.0, sample_rate=16000):
     init_hf_config()
 
@@ -190,7 +189,7 @@ def get_full_dataset(label_encoder, audio_length=10.0, sample_rate=16000):
     as_ds.set_transform(SequentialTransform(as_transforms))
     ds_list = []
     ds_list.append(as_ds["balanced_train"])
-    #ds_list.append(as_ds["unbalanced_train"])
+    ds_list.append(as_ds["unbalanced_train"])
     ds_list.append(as_ds["eval"])
 
     dataset = torch.utils.data.ConcatDataset(ds_list)

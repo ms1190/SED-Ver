@@ -1,3 +1,4 @@
+'''
 as_strong_train_classes = [
     "Child speech, kid speaking",
     "Female speech, woman speaking",
@@ -9,30 +10,30 @@ as_strong_eval_classes = [
     "Female speech, woman speaking",
     "Male speech, man speaking"
 ]
+'''
 
-genderage_classes = [
-    'Child speech, kid speaking',
-    'Female speech, woman speaking',
-    'Male speech, man speaking'
+as_strong_train_classes = [
+                    "Child speech, kid speaking",
+                    "Female speech, woman speaking",
+                    "Male speech, man speaking",
+                    "Baby cry, infant cry",
+                    "Baby laughter",
+                    "Babbling",
+                    "Children playing",
+                    "Children shouting",
+                    "Child singing",
+                    "Laughter",
+                    "Crying, sobbing",
+                    "Shout",
+                    "Yell",
+                    "Screaming",
+                    "Hubbub, speech noise, speech babble",
+                    "Music",
+                    "Background noise",
+                    "Bang",
+                    "Slam",
+                    "Breaking",
+                    "Smash, crash"
 ]
 
-genderage_classes = {
-    'Child speech, kid speaking': 0,
-    'Female speech, woman speaking': 1,
-    'Male speech, man speaking': 2
-}
-
-label_names = ['child', 'female', 'male']
-
-'''
-indices = []
-labels = []
-
-for i, c in enumerate(as_strong_train_classes):
-    if c in genderage_classes:
-        indices.append(i)
-        labels.append(genderage_classes[c])
-
-print(indices)
-print(labels)
-'''
+as_strong_eval_classes = as_strong_train_classes

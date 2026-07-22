@@ -34,8 +34,8 @@ class PredictionsWrapper(nn.Module):
     def __init__(self,
                  base_model,
                  checkpoint=None,
-                 # n_classes_strong=447,
-                 n_classes_strong=3, # CHANGED
+                 #n_classes_strong=447,
+                 n_classes_strong=21, # CHANGED
                  n_classes_weak=None,
                  embed_dim=768,
                  seq_len=250,
@@ -182,7 +182,7 @@ class PredictionsWrapper(nn.Module):
         # base model is expected to output a sequence (see Eq. (1) in paper)
         # (batch size x sequence length x embedding dimension)
         ## DEBUG CALL
-        print("input to base model:", x.shape)
+        #print("input to base model:", x.shape)
         x = self.model(x)
 
         # ATST: x.shape: batch size x 250 x 768

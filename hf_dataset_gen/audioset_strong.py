@@ -5,7 +5,7 @@ import datasets
 import h5py
 import numpy as np
 import pandas as pd
-from datasets import Value, Sequence
+from datasets import Value, Sequence, load_from_disk, DatasetDict
 
 _CITATION = "@INPROCEEDINGS{9414579, author={Hershey, Shawn and Ellis, Daniel P W and Fonseca, Eduardo and Jansen, Aren and Liu, Caroline and Channing Moore, R and Plakal, Manoj}, booktitle={ICASSP 2021 - 2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, title={The Benefit of Temporally-Strong Labels in Audio Event Classification}, year={2021},volume={},number={},pages={366-370},keywords={Training;Conferences;Signal processing;Acoustics;Speech processing;AudioSet;audio event classification;explicit negatives;temporally-strong labels},doi={10.1109/ICASSP39728.2021.9414579}}"
 
@@ -24,13 +24,13 @@ audioset_hdf5_path = "D:/audioset_tagging_cnn/datasets/audioset201906/mp3"
 
 _AUDIO_FILES = {
     "balanced_train": os.path.join(audioset_hdf5_path, "balanced_train_segments_mp3.hdf"),
-    #"unbalanced_train": os.path.join(audioset_hdf5_path, "unbalanced_train_segments_mp3.hdf"),
+    "unbalanced_train": os.path.join(audioset_hdf5_path, "unbalanced_train_segments_mp3.hdf"),
     "eval": os.path.join(audioset_hdf5_path, "eval_segments_mp3.hdf")
 }
 
 _METADATA = {
     "balanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
-    #"unbalanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
+    "unbalanced_train": os.path.join("metadata", "audioset_train_strong.csv"),
     "eval": os.path.join("metadata", "audioset_eval_strong.csv")
 }
 
@@ -126,17 +126,71 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
             df['label_id'] = df['label']
             df['label'] = df['label'].map(label_id_map_strong)
 
+            
             TARGET_CLASSES = {
                     "Child speech, kid speaking",
                     "Female speech, woman speaking",
-                    "Male speech, man speaking"
+                    "Male speech, man speaking",
+                    "Baby cry, infant cry",
+                    "Baby laughter",
+                    "Babbling",
+                    "Children playing",
+                    "Children shouting",
+                    "Child singing",
+                    "Laughter",
+                    "Crying, sobbing",
+                    "Shout",
+                    "Yell",
+                    "Screaming",
+                    "Hubbub, speech noise, speech babble",
+                    "Music",
+                    "Background noise",
+                    "Bang",
+                    "Slam",
+                    "Breaking",
+                    "Smash, crash"
                 } # TODO: filter for the target speech classes
 
+            '''
             LABEL_MAP = {
-                    "Child speech, kid speaking": "child_speech",
-                    "Female speech, woman speaking": "female_speech",
-                    "Male speech, man speaking": "male_speech"
-                } # TODO: replace weak labels with target labels (mapped)
+                # target speech classes
+                "Child speech, kid speaking": "child_speech",
+                "Female speech, woman speaking": "female_speech",
+                "Male speech, man speaking": "male_speech",
+
+                # child non-speech
+                "Baby cry, infant cry": "child_non_speech",
+                "Baby laughter": "child_non_speech",
+                "Babbling": "child_non_speech",
+                "Children playing": "child_non_speech",
+                "Children shouting": "child_non_speech",
+                "Child singing": "child_non_speech",
+
+                # human non-speech
+                "Laughter": "human_non_speech",
+                "Crying, sobbing": "human_non_speech",
+                "Shout": "human_non_speech",
+                "Yell": "human_non_speech",
+                "Screaming": "human_non_speech",
+
+                # crowd background noise
+                "Hubbub, speech noise, speech babble": "crowd",
+
+                # music
+                "Music": "music",
+                
+                # environment noise
+                "Background noise": "environment",
+                "Motor vehicle (road)": "environment",
+                "Subway, metro, underground": "environment",
+    
+                # impact sounds
+                "Generic impact sounds": "impact",
+                "Bang": "impact",
+                "Slam": "impact",
+                "Breaking": "impact",
+                "Smash, crash": "impact"
+            }'''
             
             for idx in df.index.unique():
                 yid = str(idx)
@@ -155,11 +209,12 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
                     event["event_label"] = str(row["label"])
                     event["event_label_id"] = str(row["label_id"])
                     event_list.append(event)''' # original loop for all classes
-
+                
+                
                 event_list = []
                 for index, row in seq_list.iterrows():
                     label = row["label"]
-                    if label not in TARGET_CLASSES: # filter for target speech classes
+                    if label not in TARGET_CLASSES: 
                         continue
                     event = dict()
                     event["onset"] = float(row["start_time_seconds"])
@@ -169,6 +224,23 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
                     event_list.append(event)
                 if len(event_list)==0:
                     continue
+                 #loop for original 3 classes for speech
+
+                '''event_list = []
+                for index, row in seq_list.iterrows():
+                    label = row["label"]
+                    if label not in GROUP_MAP:
+                        continue
+                    mapped_label = GROUP_MAP[label]
+                    event = {
+                        "onset": float(row["start_time_seconds"]),
+                        "offset": float(row["end_time_seconds"]),
+                        "event_label": mapped_label,
+                        "event_label_id": str(row["label_id"])
+                    }
+                    event_list.append(event)
+                if len(event_list) == 0:
+                    continue'''
 
                 '''weak_labels = np.unpackbits(target[name_to_idx[yid]], axis=-1, count=len(idx_label_map)).astype(
                     np.float32)'''
@@ -178,7 +250,8 @@ class AudiosetStrong(datasets.GeneratorBasedBuilder):
                     # "label_ids": [idx_id_map[i] for i in np.where(weak_labels)[0]],
                     # "labels": [idx_label_map[i] for i in np.where(weak_labels)[0]],
                     "label_ids": [],
-                    "labels": list({LABEL_MAP[e["event_label"]] for e in event_list}),
+                    "labels": sorted(list({e["event_label"] for e in event_list})),
+                    #"labels": list({LABEL_MAP[e["event_label"]] for e in event_list}),
                     "filepath": os.path.join(audio_path, str(yid) + '.mp3'),
                     "filename": str(yid) + '.mp3',
                     "events": event_list
@@ -204,7 +277,7 @@ if __name__ == '__main__':
     # TODO: specify location you want to store AudioSet Strong Huggingface Dataset in
     dataset.save_to_disk(
         #f"/mnt/d/audioset_strong_hf", linux path
-        f"D:/audioset_strong_hf",
+        f"D:/audioset_strong",
         max_shard_size="2GB",
         num_proc=1,
     )

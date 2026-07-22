@@ -13,10 +13,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 import sed_scores_eval
-import matplotlib.pyplot as plt
-import os
 
-from sklearn.metrics import confusion_matrix
 from helpers.decode import batched_decode_preds
 from helpers.encode import ManyHotEncoder
 from models.atstframe.ATSTF_wrapper import ATSTWrapper
@@ -27,7 +24,7 @@ from models.asit.ASIT_wrapper import ASiTWrapper
 from models.prediction_wrapper import PredictionsWrapper
 from helpers.augment import frame_shift, time_mask, mixup, filter_augmentation, mixstyle, RandomResizeCrop
 from helpers.utils import worker_init_fn
-from data_util.audioset_strong import get_training_dataset, get_eval_dataset
+from data_util.audioset_strong import get_training_dataset, get_eval_dataset #get_val_dataset
 from data_util.audioset_strong import get_temporal_count_balanced_sample_weights, get_uniform_sample_weights, \
     get_weighted_sampler
 # from data_util.audioset_classes import as_strong_train_classes, as_strong_eval_classes
@@ -295,11 +292,13 @@ class PLModule(pl.LightningModule):
             ## DEBUG
             #print("f:", f, "type:", type(f))
             matches = self.val_durations_df[self.val_durations_df["filename"] == f]
-            ## DEBUG
+            #DEBUG
             #print(f"matches={len(matches)}")
             if len(matches) == 0:
+                self.val_duration[f] = 10.0
+                self.val_ground_truth[f] = []
                 ## DEBUG
-                #print(f"NOT FOUND IN CSV: {f}")
+                #print(f"NOT FOUND IN CSV: {f}")   
                 continue
             self.val_duration[f] = matches["duration"].values[0]
             events = [e.split(";;") for e in gt_string.split("++")]
@@ -330,9 +329,10 @@ class PLModule(pl.LightningModule):
         class_intersection = gt_unique_events.intersection(train_unique_events)
 
         ## DEBUG PRINT
+        #print("debug", flush=True)
         #print("gt_unique_events:", gt_unique_events)
         #print("train_unique_events:", train_unique_events)
-        #print("val_ground_truth size:", len(self.val_ground_truth))
+        #print("val_ground_truth size:", len(self.val_ground_truth)) 
 
         # assumes number of classes is 407 
         # change assumption to match length of encoder labels
@@ -355,7 +355,6 @@ class PLModule(pl.LightningModule):
         as_strong_preds = {
             fid: self.val_predictions_strong[fid] for fid in val_ground_truth.keys()
         }
-
 
         # filter classes in predictions
         unused_classes = list(set(self.encoder.labels).difference(class_intersection))
@@ -415,6 +414,7 @@ def train(config):
     train_set = get_training_dataset(encoder, wavmix_p=config.wavmix_p,
                                      pseudo_labels_file=config.pseudo_labels_file)
     eval_set = get_eval_dataset(encoder)
+    #eval_set = get_val_dataset(encoder)
 
     if config.use_balanced_sampler:
         sample_weights = get_temporal_count_balanced_sample_weights(train_set, save_folder="resources")
@@ -446,7 +446,7 @@ def train(config):
         mode="max",
         save_top_k=1,
         dirpath="checkpoints/",
-        filename="best"
+        filename="run2"
     )
 
     # create the pytorch lightening trainer by specifying the number of epochs to train, the logger,
@@ -532,12 +532,21 @@ if __name__ == '__main__':
     parser.add_argument('--median_window', type=int, default=9)
 
     # augmentation
+    '''
     parser.add_argument('--wavmix_p', type=float, default=0.8)
     parser.add_argument('--freq_warp_p', type=float, default=0.8)
     parser.add_argument('--filter_augment_p', type=float, default=0.8)
     parser.add_argument('--frame_shift_range', type=float, default=0.125)  # in seconds
     parser.add_argument('--mixup_p', type=float, default=0.3)
     parser.add_argument('--mixstyle_p', type=float, default=0.3)
+    '''
+    parser.add_argument('--wavmix_p', type=float, default=0.3)
+    parser.add_argument('--freq_warp_p', type=float, default=0.3)
+    parser.add_argument('--filter_augment_p', type=float, default=0.3)
+    parser.add_argument('--frame_shift_range', type=float, default=0.125)
+    parser.add_argument('--mixup_p', type=float, default=0.1)
+    parser.add_argument('--mixstyle_p', type=float, default=0.1)
+    #'''
     parser.add_argument('--max_time_mask_size', type=float, default=0.0)
 
     # optimizer
